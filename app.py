@@ -1,3 +1,7 @@
+'''
+This module is a web app for Jiu Jitsu athletes intended to 
+provide a centralized location for logging their training sessions.
+'''
 import os
 from datetime import datetime, timedelta
 from collections import Counter
@@ -27,6 +31,9 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'  # Redirects to 'login' route if @login_required fails
 
 class User(db.Model, UserMixin):
+    '''
+    Creates a User object to identify each unique user accessing the app.
+    '''
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
@@ -34,6 +41,10 @@ class User(db.Model, UserMixin):
 
 
 class TrainingLog(db.Model):
+    '''
+    Creates TrainingLog object to identify each training 
+    session to fill the database fields.
+    '''
     id = db.Column(db.Integer, primary_key = True)
     date = db.Column(db.Date, nullable = False)
     partner = db.Column(db.String(100), nullable = False)
@@ -48,14 +59,24 @@ class TrainingLog(db.Model):
     
 @login_manager.user_loader
 def load_user(user_id):
+    '''
+    Loads the user's unique id.
+    '''
     return User.query.get(int(user_id))
 
 @app.route('/')
 def index():
+    '''
+    Loads index/homepage.
+    '''
     return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    '''
+    Loads register page for new users and collects their form submissions.
+    Creates a new user.
+    '''
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -68,6 +89,10 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    '''
+    Logs in a valid credentialed user and redirects to dashboard when
+    valid.
+    '''
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -81,12 +106,19 @@ def login():
 @app.route('/logout')
 @login_required
 def logout():
+    '''
+    Ends user session and redirects to login page.
+    '''
     logout_user()
     return redirect(url_for('login'))
 
 @app.route(('/add'), methods=['GET', 'POST'])
 @login_required
 def add_roll():
+    '''
+    Collects form filed submissions and creates new TrainingLog 
+    object to add to database fields.
+    '''
     if request.method == 'POST':
         date = datetime.strptime(request.form['date'], '%Y-%m-%d')
         partner = request.form['partner']
@@ -113,6 +145,10 @@ def add_roll():
 @app.route('/rolls')
 @login_required
 def view_rolls():
+    '''
+    Displays all rolls for current user ordered by date. Can be 
+    filtered/searched on as well.
+    '''
     partner = request.args.get('partner', '')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
@@ -133,6 +169,10 @@ def view_rolls():
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_roll(id):
+    '''
+    Opens an edit page to edit a previously entered 
+    roll/TrainingLog.
+    '''
     roll = TrainingLog.query.get_or_404(id)
 
     if request.method == 'POST':
@@ -149,6 +189,9 @@ def edit_roll(id):
 
 @app.route('/delete/<int:id>', methods=['POST'])
 def delete_roll(id):
+    '''
+    Allows deletion of previous rolls/TrainingLogs.
+    '''
     roll = TrainingLog.query.get_or_404(id)
     db.session.delete(roll)
     db.session.commit()
@@ -157,6 +200,10 @@ def delete_roll(id):
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    '''
+    Displays a dashboard page for current user with quick
+    insights into total rolls, submission distributions, etc.
+    '''
     # Month/year filters
     month = request.args.get('month')
     year = request.args.get('year')

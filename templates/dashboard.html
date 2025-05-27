@@ -29,6 +29,9 @@
       </style>      
 </head>
 <body>
+    <form action="{{ url_for('logout') }}" method="get">
+        <button type="submit">Logout</button>
+    </form>    
     <div class="text-end p-3">
         <button id="modeToggle" class="btn btn-outline-secondary">Toggle Dark/Light</button>
     </div>
