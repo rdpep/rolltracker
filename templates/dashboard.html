@@ -28,16 +28,13 @@
         }
       </style>      
 </head>
-<body>
-    <form action="{{ url_for('logout') }}" method="get">
-        <button type="submit">Logout</button>
-    </form>    
+<body>   
     <div class="text-end p-3">
         <button id="modeToggle" class="btn btn-outline-secondary">Toggle Dark/Light</button>
+        <p class="text-end p-3">
+            <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+        </p>
     </div>
-    <p class="text-end p-3">
-        <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
-    </p>
     <div class="container my-5">
         <h1 class="mb-4">Dashboard</h1>
 
