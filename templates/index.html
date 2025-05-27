@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RollTracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+            color: white;
+        }
+
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            opacity: 0;
+            animation: fadeSlide 1s ease-out forwards;
+        }
+
+        .delay-1 { animation-delay: 0.3s; }
+        .delay-2 { animation-delay: 0.6s; }
+        .delay-3 { animation-delay: 0.9s; }
+
+        .btn-custom {
+            font-size: 1.2rem;
+            padding: 0.75rem 1.5rem;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+            color: white;
+        }
+    </style>
+</head>
+<body>      
+    <div class="container text-center py-5">
+        <h1 class="display-3 fw-bold fade-in delay-1">🥋 RollTracker</h1>
+        <p class="lead fade-in delay-2">Track your Jiu Jitsu training, analyze your rolls, and sharpen your game.</p>
+
+        <div class="mt-5 fade-in delay-3">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('add_roll') }}" class="btn btn-primary btn-lg mx-2 btn-custom">Add New Session</a>
+                <a href="{{ url_for('view_rolls') }}" class="btn btn-success btn-lg mx-2 btn-custom">View Rolls</a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-info btn-lg mx-2 btn-custom">Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger btn-lg mx-2 btn-custom">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg mx-2 btn-custom">Login</a>
+                <a href="{{ url_for('register') }}" class="btn btn-outline-light btn-lg mx-2 btn-custom">Register</a>
+            {% endif %}
+        </div>
+    </div>    
+</body>
+</html>
+

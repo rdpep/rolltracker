@@ -1,0 +1,47 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 40px;
+}
+h1 {
+    color: darkblue;
+}
+@keyframes fadeSlide {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .fade-in {
+    animation: fadeSlide 1s ease-out forwards;
+    opacity: 0; /* Start invisible until animation runs */
+  }
+  .fade-in:nth-child(1) { animation-delay: 0s; }
+  .fade-in:nth-child(2) { animation-delay: 0.3s; }
+    
+body.light-mode {
+    background-color: #f8f9fa;
+    color: #212529;
+}
+
+body.dark-mode {
+    background-color: #121212;
+    color: #ffffff;
+}
+
+.btn-outline-light {
+    border-color: #fff;
+    color: #fff;
+}
+
+.btn-outline-light:hover {
+    background-color: #ffffff22;
+    color: #fff;
+}
+body.dark-mode .form-text {
+    color: #cccccc;
+}

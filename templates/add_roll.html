@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Roll | RollTracker{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4">Log a New Training Session</h1>
+
+    <form method="POST">
+        <div class="mb-3">
+            <label for="date" class="form-label">Date</label>
+            <input type="date" class="form-control" id="date" name="date" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="partner" class="form-label">Training Partner</label>
+            <input type="text" class="form-control" id="partner" name="partner" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="duration" class="form-label">Duration (minutes)</label>
+            <input type="number" class="form-control" id="duration" name="duration" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="subs" class="form-label">Submissions You Landed</label>
+            <input type="text" class="form-control" id="subs" name="subs" aria-describedby="subsHelpBlock">
+            <div id="subsHelpBlock" class="form-text">
+                Submissions should be comma separated if multiple (e.g., Triangle, Armbar, RNC)
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="subbed_with" class="form-label">Submissions You Were Caught With</label>
+            <input type="text" class="form-control" id="subbed_with" name="subbed_with" aria-describedby="subbedHelpBlock">
+            <div id="subbedHelpBlock" class="form-text">
+                Submissions should be comma separated if multiple (e.g., Triangle, Armbar, RNC)
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="notes" class="form-label">Notes</label>
+            <textarea class="form-control" id="notes" name="notes" rows="4"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <hr class="my-4">
+
+    <p>
+        <a href="{{ url_for('view_rolls') }}" class="btn btn-secondary">View All Rolls</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Dashboard</a>
+    </p>
+</div>
+{% endblock %}
