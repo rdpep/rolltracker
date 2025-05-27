@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timedelta
 from collections import Counter
 
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, flash, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_bcrypt import Bcrypt
@@ -78,10 +78,14 @@ def register():
     Creates a new user.
     '''
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
+        if password != confirm_password:
+            flash("Passwords do not match", "danger")
+            return render_template('register.html')
         hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
-        user = User(username=username, password=hashed_pw)
+        user = User(username=email, password=hashed_pw)
         db.session.add(user)
         db.session.commit()
         return redirect(url_for('login'))
@@ -94,9 +98,9 @@ def login():
     valid.
     '''
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=email).first()
         if user and bcrypt.check_password_hash(user.password, password):
             login_user(user)
             return redirect(url_for('dashboard'))
