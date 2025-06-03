@@ -15,6 +15,8 @@ from flask_login import (
     logout_user, login_required, current_user
 )
 from dotenv import load_dotenv
+import sys
+import traceback
 
 
 load_dotenv()
@@ -169,23 +171,28 @@ def view_rolls():
     Displays all rolls for current user ordered by date. Can be 
     filtered/searched on as well.
     '''
-    is_demo = current_user.username == demo_user
-    partner = request.args.get('partner', '')
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    page = request.args.get('page', 1, type=int)
+    try:
+        is_demo = current_user.username == demo_user
+        partner = request.args.get('partner', '')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        page = request.args.get('page', 1, type=int)
 
-    query = TrainingLog.query.filter_by(user_id=current_user.id)
+        query = TrainingLog.query.filter_by(user_id=current_user.id)
 
-    if partner:
-        query = query.filter(TrainingLog.partner.ilike(f'%{partner}%'))
-    if start_date:
-        query = query.filter(TrainingLog.date >= datetime.strptime(start_date, '%Y-%m-%d')) 
-    if end_date:
-        query = query.filter(TrainingLog.date <= datetime.strptime(end_date, '%Y-%m-%d'))
+        if partner:
+            query = query.filter(TrainingLog.partner.ilike(f'%{partner}%'))
+        if start_date:
+            query = query.filter(TrainingLog.date >= datetime.strptime(start_date, '%Y-%m-%d')) 
+        if end_date:
+            query = query.filter(TrainingLog.date <= datetime.strptime(end_date, '%Y-%m-%d'))
 
-    rolls = query.order_by(TrainingLog.date.desc()).paginate(page=page, per_page=5)
-    return render_template('rolls.html', rolls=rolls, is_demo=is_demo)
+        rolls = query.order_by(TrainingLog.date.desc()).paginate(page=page, per_page=5)
+        return render_template('rolls.html', rolls=rolls, is_demo=is_demo)
+    except Exception:
+        print("View rolls error:", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        return "An error occurred in the view rolls.", 500
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -225,59 +232,64 @@ def dashboard():
     Displays a dashboard page for current user with quick
     insights into total rolls, submission distributions, etc.
     '''
-    # Month/year filters
-    month = request.args.get('month')
-    year = request.args.get('year')
+    try:
+        # Month/year filters
+        month = request.args.get('month')
+        year = request.args.get('year')
 
-    query = TrainingLog.query.filter_by(user_id=current_user.id)
+        query = TrainingLog.query.filter_by(user_id=current_user.id)
 
-    if month and year:
-        query = query.filter(
-            func.strftime('%m', TrainingLog.date) == month.zfill(2),
-            func.strftime('%Y', TrainingLog.date) == year
+        if month and year:
+            query = query.filter(
+                func.strftime('%m', TrainingLog.date) == month.zfill(2),
+                func.strftime('%Y', TrainingLog.date) == year
+            )
+
+        rolls = query.order_by(TrainingLog.date.desc()).all()
+
+        # Basic stats
+        total_sessions = len(rolls)
+        total_mins = sum(roll.duration or 0 for roll in rolls)
+        avg_duration = round(total_mins / total_sessions, 2) if total_sessions else 0
+
+        # Weekly stats, last 4 weeks
+        today = datetime.today()
+        start_of_week = today - timedelta(days=today.weekday())
+        weekly_mins = []
+
+        for i in range(4):
+            week_start = start_of_week - timedelta(weeks=i)
+            week_end = week_start + timedelta(days=6)
+            week_logs = [r for r in rolls if r.date and week_start.date() <= r.date <= week_end.date()]
+
+            week_total = sum(r.duration for r in week_logs)
+            label = f'{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}'
+            weekly_mins.append((label, week_total))
+        
+        weekly_mins.reverse()
+
+        # Submission stats
+        def extract_subs(rolls, attr):
+            submissions = []
+            for roll in rolls:
+                field = getattr(roll, attr)
+                if field:
+                    submissions += [s.strip().capitalize() for s in field.split(',')]
+            return Counter(submissions)
+        
+        win_data = extract_subs(rolls, 'subs')
+        loss_data = extract_subs(rolls, 'subbed_with')
+
+        return render_template(
+            'dashboard.html',
+            total_sessions=total_sessions,
+            total_mins=total_mins,
+            avg_duration=avg_duration,
+            weekly_mins=weekly_mins,
+            win_data=win_data,
+            loss_data=loss_data
         )
-
-    rolls = query.order_by(TrainingLog.date.desc()).all()
-
-    # Basic stats
-    total_sessions = len(rolls)
-    total_mins = sum(roll.duration or 0 for roll in rolls)
-    avg_duration = round(total_mins / total_sessions, 2) if total_sessions else 0
-
-    # Weekly stats, last 4 weeks
-    today = datetime.today()
-    start_of_week = today - timedelta(days=today.weekday())
-    weekly_mins = []
-
-    for i in range(4):
-        week_start = start_of_week - timedelta(weeks=i)
-        week_end = week_start + timedelta(days=6)
-        week_logs = [r for r in rolls if r.date and week_start.date() <= r.date <= week_end.date()]
-
-        week_total = sum(r.duration for r in week_logs)
-        label = f'{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}'
-        weekly_mins.append((label, week_total))
-    
-    weekly_mins.reverse()
-
-    # Submission stats
-    def extract_subs(rolls, attr):
-        submissions = []
-        for roll in rolls:
-            field = getattr(roll, attr)
-            if field:
-                submissions += [s.strip().capitalize() for s in field.split(',')]
-        return Counter(submissions)
-    
-    win_data = extract_subs(rolls, 'subs')
-    loss_data = extract_subs(rolls, 'subbed_with')
-
-    return render_template(
-        'dashboard.html',
-        total_sessions=total_sessions,
-        total_mins=total_mins,
-        avg_duration=avg_duration,
-        weekly_mins=weekly_mins,
-        win_data=win_data,
-        loss_data=loss_data
-    )
+    except Exception:
+        print("Dashboard error:", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        return "An error occurred in the dashboard.", 500
