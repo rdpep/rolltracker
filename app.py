@@ -256,7 +256,7 @@ def dashboard():
         week_end = week_start + timedelta(days=6)
         week_logs = [r for r in rolls if r.date and week_start.date() <= r.date <= week_end.date()]
 
-        week_total = sum(r.duration for r in week_logs)
+        week_total = sum(r.duration or 0 for r in week_logs)
         label = f'{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}'
         weekly_mins.append((label, week_total))
     
@@ -274,6 +274,20 @@ def dashboard():
     win_data = extract_subs(rolls, 'subs')
     loss_data = extract_subs(rolls, 'subbed_with')
 
+    def serialize_roll(roll):
+        return {
+            'id': roll.id,
+            'date': roll.date.isoformat() if roll.date else None,
+            'partner': roll.partner,
+            'duration': roll.duration,
+            'subs': roll.subs,
+            'subbed_with': roll.subbed_with,
+            'notes': roll.notes,
+        }
+
+    rolls_data = [serialize_roll(r) for r in rolls]
+
+
     return render_template(
         'dashboard.html',
         total_sessions=total_sessions,
@@ -281,5 +295,6 @@ def dashboard():
         avg_duration=avg_duration,
         weekly_mins=weekly_mins,
         win_data=win_data,
-        loss_data=loss_data
+        loss_data=loss_data,
+        rolls=rolls_data
     )
