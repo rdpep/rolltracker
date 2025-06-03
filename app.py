@@ -253,6 +253,7 @@ def dashboard():
     Displays a dashboard page for current user with quick
     insights into total rolls, submission distributions, etc.
     '''
+    is_demo = current_user.username == demo_user
     # Month/year filters
     month = request.args.get('month')
     year = request.args.get('year')
@@ -322,5 +323,6 @@ def dashboard():
         weekly_mins=weekly_mins,
         win_data=win_data,
         loss_data=loss_data,
+        is_demo=is_demo,
         rolls=rolls_data
     )
