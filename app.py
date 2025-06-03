@@ -187,7 +187,26 @@ def view_rolls():
         query = query.filter(TrainingLog.date <= datetime.strptime(end_date, '%Y-%m-%d'))
 
     rolls = query.order_by(TrainingLog.date.desc()).paginate(page=page, per_page=5)
-    return render_template('rolls.html', rolls=rolls, is_demo=is_demo)
+
+    def serialize_roll(roll):
+        return {
+            'id': roll.id,
+            'date': roll.date.isoformat() if roll.date else None,
+            'partner': roll.partner,
+            'duration': roll.duration,
+            'subs': roll.subs,
+            'subbed_with': roll.subbed_with,
+            'notes': roll.notes,
+        }
+
+    serialized_rolls = [serialize_roll(r) for r in rolls.items]
+
+    return render_template(
+        'rolls.html',
+        rolls=rolls,
+        is_demo=is_demo,
+        serialized_rolls=serialized_rolls
+        )
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required

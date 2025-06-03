@@ -156,7 +156,7 @@
     </script> 
     <script>
         const isDemo = {{ is_demo | tojson }};
-        const serverRolls = {{ rolls.items | tojson if not is_demo else '[]' }};
+        const serverRolls = {{ serialized_rolls.items | tojson if not is_demo else '[]' }};
       </script>
       
       <script>
