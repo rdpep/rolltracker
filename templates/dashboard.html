@@ -90,63 +90,154 @@
                 <canvas id="lossChart"></canvas>
             </div>
         </div>
-    <script>
-        const ctx = document.getElementById('weeklyChart').getContext('2d');
-        const weeklyChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
+        <p class="mt-4">
+            <a href="{{ url_for('view_rolls') }}" class="btn btn-secondary">View All Rolls</a>
+            <a href="{{ url_for('add_roll') }}" class="btn btn-secondary">Add New Session</a> 
+        </p>
+        <script>
+            // Pass server rolls as JSON for recomputing stats client side
+            const isDemo = {{ session.get('is_demo', False) | tojson }};
+            const serverRolls = {{ rolls | tojson }};
+          
+            function parseDate(dateStr) {
+              return new Date(dateStr);
+            }
+          
+            function summarizeRolls(rolls) {
+              const totalSessions = rolls.length;
+              const totalMinutes = rolls.reduce((sum, roll) => sum + (roll.duration || 0), 0);
+              const avgDuration = totalSessions ? (totalMinutes / totalSessions).toFixed(1) : 0;
+          
+              return { totalSessions, totalMinutes, avgDuration };
+            }
+          
+            function getWeeklyMinutes(rolls) {
+              const now = new Date();
+              const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+              const weeks = [];
+          
+              for (let i = 3; i >= 0; i--) {
+                const start = new Date(now.getTime() - i * oneWeekMs);
+                start.setHours(0,0,0,0);
+                weeks.push({ start, total: 0 });
+              }
+          
+              rolls.forEach(roll => {
+                const rollDate = parseDate(roll.date);
+                weeks.forEach(week => {
+                  if (rollDate >= week.start && rollDate < new Date(week.start.getTime() + oneWeekMs)) {
+                    week.total += roll.duration || 0;
+                  }
+                });
+              });
+          
+              return weeks.map(w => [w.start.toLocaleDateString(), w.total]);
+            }
+          
+            // Summarize submissions landed & submissions caught in
+            function getSubmissionData(rolls) {
+              const winData = {};
+              const lossData = {};
+          
+              rolls.forEach(roll => {
+                if (roll.subs) {
+                  roll.subs.split(',').map(s => s.trim()).forEach(sub => {
+                    if (sub) winData[sub] = (winData[sub] || 0) + 1;
+                  });
+                }
+                if (roll.subbed_with) {
+                  roll.subbed_with.split(',').map(s => s.trim()).forEach(sub => {
+                    if (sub) lossData[sub] = (lossData[sub] || 0) + 1;
+                  });
+                }
+              });
+          
+              return { winData, lossData };
+            }
+          
+            // Re-render the dashboard numbers and charts dynamically
+            function updateDashboard(rolls) {
+              const summary = summarizeRolls(rolls);
+              document.getElementById('totalSessions').textContent = summary.totalSessions;
+              document.getElementById('totalMinutes').textContent = summary.totalMinutes;
+              document.getElementById('avgDuration').textContent = summary.avgDuration + ' mins';
+          
+              // Update weekly chart
+              const weeklyData = getWeeklyMinutes(rolls);
+              weeklyChart.data.labels = weeklyData.map(w => w[0]);
+              weeklyChart.data.datasets[0].data = weeklyData.map(w => w[1]);
+              weeklyChart.update();
+          
+              // Update win/loss submission charts
+              const { winData, lossData } = getSubmissionData(rolls);
+          
+              winChart.data.labels = Object.keys(winData);
+              winChart.data.datasets[0].data = Object.values(winData);
+              winChart.update();
+          
+              lossChart.data.labels = Object.keys(lossData);
+              lossChart.data.datasets[0].data = Object.values(lossData);
+              lossChart.update();
+            }
+          
+            // Initialize charts with existing server data (initial render)
+            const ctx = document.getElementById('weeklyChart').getContext('2d');
+            const weeklyChart = new Chart(ctx, {
+              type: 'bar',
+              data: {
                 labels: {{ weekly_mins | map(attribute=0) | list | tojson }},
                 datasets: [{
-                    label: 'Training Minutes',
-                    data: {{ weekly_mins | map(attribute=1) | list | tojson }},
-                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 1
+                  label: 'Training Minutes',
+                  data: {{ weekly_mins | map(attribute=1) | list | tojson }},
+                  backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                  borderColor: 'rgba(75, 192, 192, 1)',
+                  borderWidth: 1
                 }]
-            },
-            options: {
+              },
+              options: {
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Minutes' }
-                    }
+                  y: { beginAtZero: true, title: { display: true, text: 'Minutes' } }
                 }
-            }
-        });
-    </script>
-    <script>
-        const winData = {{ win_data | tojson }};
-        const winLabels = Object.keys(winData);
-        const winCounts = Object.values(winData);
-    
-        new Chart(document.getElementById('winChart'), {
-            type: 'pie',
-            data: {
+              }
+            });
+          
+            const winData = {{ win_data | tojson }};
+            const winLabels = Object.keys(winData);
+            const winCounts = Object.values(winData);
+            const winChart = new Chart(document.getElementById('winChart'), {
+              type: 'pie',
+              data: {
                 labels: winLabels,
                 datasets: [{
-                    label: 'Subs',
-                    data: winCounts,
-                    backgroundColor: ['#4CAF50', '#81C784', '#A5D6A7', '#66BB6A']
+                  label: 'Subs',
+                  data: winCounts,
+                  backgroundColor: ['#4CAF50', '#81C784', '#A5D6A7', '#66BB6A']
                 }]
-            }
-        });
-    
-        const lossData = {{ loss_data | tojson }};
-        const lossLabels = Object.keys(lossData);
-        const lossCounts = Object.values(lossData);
-
-        new Chart(document.getElementById('lossChart'), {
-            type: 'pie',
-            data: {
+              }
+            });
+          
+            const lossData = {{ loss_data | tojson }};
+            const lossLabels = Object.keys(lossData);
+            const lossCounts = Object.values(lossData);
+            const lossChart = new Chart(document.getElementById('lossChart'), {
+              type: 'pie',
+              data: {
                 labels: lossLabels,
                 datasets: [{
-                    label: 'Subbed',
-                    data: lossCounts,
-                    backgroundColor: ['#FF5252', '#E57373', '#EF9A9A', '#FF8A65']
+                  label: 'Subbed',
+                  data: lossCounts,
+                  backgroundColor: ['#FF5252', '#E57373', '#EF9A9A', '#FF8A65']
                 }]
+              }
+            });
+          
+            // If demo, combine with localStorage rolls and update dashboard
+            if (isDemo) {
+              const demoRolls = JSON.parse(localStorage.getItem("demo_rolls") || "[]");
+              const combinedRolls = [...serverRolls, ...demoRolls];
+              updateDashboard(combinedRolls);
             }
-        });
-    </script>
+        </script>          
     <script>
         const toggleBtn = document.getElementById('modeToggle');
         const body = document.body;
@@ -170,11 +261,6 @@
             }
         });
     </script>    
-
-        <p class="mt-4">
-            <a href="{{ url_for('view_rolls') }}" class="btn btn-secondary">View All Rolls</a>
-            <a href="{{ url_for('add_roll') }}" class="btn btn-secondary">Add New Session</a> 
-        </p>
     </div>
 </body>
 </html>

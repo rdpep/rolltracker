@@ -5,7 +5,13 @@
 {% block content %}
 <div class="container my-5">
     <h1 class="mb-4">Log a New Training Session</h1>
-    
+
+    {% if session.get('is_demo') %}
+    <div class="alert alert-info text-center">
+        You are in <strong>demo mode</strong>. Your roll will be saved locally in your browser and not stored on the server.
+    </div>
+    {% endif %}
+
     <form method="POST">
         <div class="mb-3">
             <label for="date" class="form-label">Date</label>
@@ -53,4 +59,33 @@
         <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Dashboard</a>
     </p>
 </div>
+
+<!-- Demo user handling -->
+<script>
+    const isDemo = {{ session.get('is_demo', False) | tojson }};
+
+    if (isDemo) {
+        document.querySelector("form").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const roll = {
+                date: formData.get('date'),
+                partner: formData.get('partner'),
+                duration: parseInt(formData.get('duration')) || 0,
+                subs: formData.get('subs'),
+                subbed_with: formData.get('subbed_with'),
+                notes: formData.get('notes')
+            };
+
+            let rolls = JSON.parse(localStorage.getItem("demo_rolls") || "[]");
+            rolls.push(roll);
+            localStorage.setItem("demo_rolls", JSON.stringify(rolls));
+
+            alert("Demo mode: Your roll was saved locally.");
+            window.location.href = "{{ url_for('view_rolls') }}";
+        });
+    }
+</script>
 {% endblock %}
+

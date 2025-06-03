@@ -29,6 +29,7 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'  # Redirects to 'login' route if @login_required fails
+demo_user = os.getenv('demo_username')
 
 class User(db.Model, UserMixin):
     '''
@@ -81,9 +82,20 @@ def register():
         email = request.form['email']
         password = request.form['password']
         confirm_password = request.form['confirm_password']
+        registration_code = request.form.get('registration_code')
+
+        if registration_code != os.getenv('regis_code'):
+            flash('Invalid registration code.', 'danger')
+            return render_template('register.html')
         if password != confirm_password:
             flash("Passwords do not match", "danger")
             return render_template('register.html')
+        
+        existing_user = User.query.filter_by(username=email).first()
+        if existing_user:
+            flash('User already exists', 'warning')
+            return render_template('register.html')
+        
         hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
         user = User(username=email, password=hashed_pw)
         db.session.add(user)
@@ -131,6 +143,10 @@ def add_roll():
         subbed_with = request.form['subbed_with']
         notes = request.form['notes']
 
+        if current_user.username == demo_user:
+            flash('Demo Mode: Your data has been temporarily saved in your browser.', 'info')
+            return redirect(url_for('view_rolls'))
+
         new_roll = TrainingLog(
             date=date,
             partner=partner,
@@ -153,6 +169,7 @@ def view_rolls():
     Displays all rolls for current user ordered by date. Can be 
     filtered/searched on as well.
     '''
+    is_demo = current_user.username == demo_user
     partner = request.args.get('partner', '')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
@@ -168,7 +185,7 @@ def view_rolls():
         query = query.filter(TrainingLog.date <= datetime.strptime(end_date, '%Y-%m-%d'))
 
     rolls = query.order_by(TrainingLog.date.desc()).paginate(page=page, per_page=5)
-    return render_template('rolls.html', rolls=rolls)
+    return render_template('rolls.html', rolls=rolls, is_demo=is_demo)
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
