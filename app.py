@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timedelta
 from collections import Counter
 
-from flask import Flask, flash, render_template, request, redirect, url_for
+from flask import Flask, flash, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from flask_bcrypt import Bcrypt
@@ -15,8 +15,6 @@ from flask_login import (
     logout_user, login_required, current_user
 )
 from dotenv import load_dotenv
-import sys
-import traceback
 
 
 load_dotenv()
@@ -117,6 +115,7 @@ def login():
         user = User.query.filter_by(username=email).first()
         if user and bcrypt.check_password_hash(user.password, password):
             login_user(user)
+            session['is_demo'] = user.username == demo_user
             return redirect(url_for('dashboard'))
         return 'Invalid credentials', 401
     return render_template('login.html')
