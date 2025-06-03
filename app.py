@@ -215,6 +215,10 @@ def edit_roll(id):
     Opens an edit page to edit a previously entered 
     roll/TrainingLog.
     '''
+    if current_user.username == demo_user:
+        flash("Changes are disabled in demo mode.", "warning")
+        return redirect(url_for('view_rolls'))
+
     roll = TrainingLog.query.get_or_404(id)
 
     if request.method == 'POST':
@@ -234,6 +238,10 @@ def delete_roll(id):
     '''
     Allows deletion of previous rolls/TrainingLogs.
     '''
+    if current_user.username == demo_user:
+        flash("Changes are disabled in demo mode.", "warning")
+        return redirect(url_for('view_rolls'))
+
     roll = TrainingLog.query.get_or_404(id)
     db.session.delete(roll)
     db.session.commit()
