@@ -1,8 +1,11 @@
 # RollTracker
 
 Live Demo: https://rolltracker.pythonanywhere.com/
+
 DEMO ACCOUNT:
+
   Email Address: demo@user.com
+  
   Password: 1234
 
 A web app that is designed to collect and track a jiu jitsu practitioner's progress on the mats. This app is intended to provide insights into how someone is training and any trends in their training habits. Rather than training/sparring without any direction or idea of performance, this app can be used after each roll/session to notate performance. Leave the memory to the app! Over time, you will be able to understand what you personal jiu jitsu game is like and where you can improve. 
