@@ -241,7 +241,7 @@ def dashboard():
 
     # Basic stats
     total_sessions = len(rolls)
-    total_mins = sum(roll.duration for roll in rolls)
+    total_mins = sum(roll.duration or 0 for roll in rolls)
     avg_duration = round(total_mins / total_sessions, 2) if total_sessions else 0
 
     # Weekly stats, last 4 weeks
@@ -252,7 +252,7 @@ def dashboard():
     for i in range(4):
         week_start = start_of_week - timedelta(weeks=i)
         week_end = week_start + timedelta(days=6)
-        week_logs = [r for r in rolls if week_start.date() <= r.date <= week_end.date()]
+        week_logs = [r for r in rolls if r.date and week_start.date() <= r.date <= week_end.date()]
 
         week_total = sum(r.duration for r in week_logs)
         label = f'{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}'
