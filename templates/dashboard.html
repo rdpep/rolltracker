@@ -35,6 +35,12 @@
       </div>          
     <div class="container my-5">
         <h1 class="mb-4">Dashboard</h1>
+        {% if is_demo %}
+            <div class="alert alert-info text-center">
+                You're in demo mode. Some logs are preloaded for test view. New logs you add are not displayed.
+            </div>
+            <div id="rollsContainer"></div>
+        {% endif %}
 
         <form method="GET" class="row g-3 mb-4">
             <div class="col-md-2">
